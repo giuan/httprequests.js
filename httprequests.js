@@ -2,7 +2,7 @@
 
 'use strict';
 
-// funzioni di utilità
+// utilities functions
 function pairArrayToUriEncoded(pa) {
   var params = pa.map(function(pair) {
     return encodeURIComponent(pair[0]) + "=" + encodeURIComponent(pair[1])
