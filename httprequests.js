@@ -2,49 +2,68 @@
 
 'use strict';
 
-// utilities functions
-function pairArrayToUriEncoded(pa) {
-  var params = pa.map(function(pair) {
-    return encodeURIComponent(pair[0]) + "=" + encodeURIComponent(pair[1])
-  })
-  return params.join('&')
-}
-
-function formDataToUriEncoded(formdata) {
-  return pairArrayToUriEncoded(Array.from(formdata))
-}
-
-function formToUriEncoded(form) {
-  if (typeof(form) == "string") {
-    form = document.querySelector(form);
-  }
-  return formDataToUriEncoded(new FormData(form))
-}
-
-function objectToUriEncoded(obj) {
-  var pairs = Object.keys(obj)
-  pairs.forEach(function(k, i) {
-    pairs[i] = [k, obj[k]]
-  })
-  return pairArrayToUriEncoded(pairs)
-}
-
-function formDataToJson(formData) {
-  var object = {};
-  Array.from(formData).forEach(function(value, key) {
-    object[key] = (object[key] ? [].concat(object[key], value) : value)
-  });
-  return JSON.stringify(object);
-}
-
-function formToJson(form) {
-  if (typeof(form) == "string") {
-    form = document.querySelector(form);
-  }
-  return formDataToJson(new FormData(form))
-}
+var dom = {}
 
 var http = (function() {
+  function qs(selector) {
+    return document.querySelector(selector);
+  }
+  function qsa(selector) {
+    var res = document.querySelectorAll(selector);
+    if (res.forEach) return res;
+    else return Array.from(res);
+  }
+
+  function getFormData(form) {
+    var els = qsa('[name]');
+    if (!els.forEach) els = Array.from(els);
+    var params = [];
+    els.forEach(function(e){
+      if (e.tagName == 'INPUT' && (e.type == 'radio' || e.type == 'checkbox')) {
+         if (e.checked) params.push([e.name, e.value])
+      } else if (e.tagName == 'SELECT') {
+        var o = Array.from(e.querySelectorAll(':checked'));
+        o.forEach(function(s){
+          params.push([e.name, s.value])
+        })
+      } else {
+        params.push([e.name, e.value])
+      }
+    })
+    return params;
+  }
+  function pairArrayToUriEncoded(pa) {
+    var params = pa.map(function(pair) {
+      return encodeURIComponent(pair[0]) + "=" + encodeURIComponent(pair[1])
+    })
+    console.log(params)
+    return params.join('&')
+  }
+
+  function pairArrayToFormData(pa) {
+    var formData = new FormData();
+    pa.forEach(function(pair) {
+      formData.append(encodeURIComponent(pair[0]), encodeURIComponent(pair[1]))
+    })
+    return formData
+  }
+
+  function objectToUriEncoded(obj) {
+    var pairs = Object.keys(obj)
+    pairs.forEach(function(k, i) {
+      pairs[i] = [k, obj[k]]
+    })
+    return pairArrayToUriEncoded(pairs)
+  }
+
+  function pairArrayToJson(pa) {
+    var object = {};
+    pa.forEach(function(p) {
+      object[p[0]] = (object[p[0]] ? [].concat(object[p[0]], p[1]) : p[1])
+    });
+    return JSON.stringify(object);
+  }
+
   function request(method, url, params, okhandler, err400handler) {
     // for request({method: ...,})
     if (typeof(method) != 'string') {
@@ -67,15 +86,27 @@ var http = (function() {
     http.requestHeaders = {}
     var ct = headers['Content-Type'];
     if (ct && ct.search('json') >= 0) {
-      if (params instanceof FormData)
-        params = formDataToJsonEncoded(params)
-      else if (typeof(params) == "object")
+      if (params instanceof FormData) {
+        //params = formDataToJson(params)
+        throw("Error: no FormData for json request ")
+      } else if (Array.isArray(params)){
+        params = pairArrayToJson(params)
+      }else if (typeof(params) == "object"){
         params = JSON.stringify(params)
+      }
     }else if (typeof(params) == "string") {
       // do nothing
     } else if (params instanceof FormData) {
       if (['get','head','options'].includes(method)) {
-        params = formDataToUriEncoded(params)
+        //params = formDataToUriEncoded(params)
+        throw("Error: no FormData for GET request ")
+      }
+    } else if (Array.isArray(params)){
+      if (['get','head','options'].includes(method)) {
+        headers["Content-type"] = "application/x-www-form-urlencoded"
+        params = pairArrayToUriEncoded(params)
+      }else {
+        params = pairArrayToFormData(params)
       }
     } else if (typeof(params) == 'object'){
       if (!['get','head','options'].includes(method)) {
@@ -138,5 +169,10 @@ var http = (function() {
     },
     defaultErrorHandler: defaultErrorHandler
   }
+
+  // export
+  dom.qs = qs;
+  dom.qsa = qsa;
+  dom.getFormData = getFormData;
   return http;
 })();
