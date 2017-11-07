@@ -69,6 +69,11 @@ http.post('\insert',{name: 'Jhon'}, function(data){
     console.log(data)
 })
 ```
+ 
+### Parameters type
+* GET,HEAD -> string-url-encodes, Object, Array of pairs
+* All others -> FormData, string-url-encodes, Object, Array of pairs
+* JSON -> Object, Array of pairs
 
 ### Reference
 Object `http`
@@ -105,3 +110,11 @@ Object `http`
       http.defaultErrorHandler = function(status, statusText, data)
           respond to error codes 5xx and 4xx if no 4xx handler
 > `[parameter]` -> `parameter` is optional
+
+## DOM utilities
+```
+dom.qs(selector)   document.querySelector(selector)
+dom.qsa(selector)   document.querySelectorAll(selector)
+  -> return a NodeList | Array if NodeList does't have forEach method
+dom.getFormData(formElement) -> [[name, value],...]
+```
