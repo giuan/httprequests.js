@@ -15,7 +15,7 @@ var http = (function() {
   }
 
   function getFormData(form) {
-    var els = qsa('[name]');
+    var els = form.querySelectorAll('[name]');
     if (!els.forEach) els = Array.from(els);
     var params = [];
     els.forEach(function(e){
