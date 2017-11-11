@@ -54,9 +54,9 @@ http.get('\hello',{name: 'Jhon'},
 ### Override default error handler
 The default error handler display errors in an alert dialog.
 ```
-http.defaultErrorHandler(function(status, statusText, data) {
+http.defaultErrorHandler = function(status, statusText, data) {
   console.log(status,statusText,data)
-})
+}
 ```
 Now errors goes to console.
 ### Requests with headers
